@@ -21,7 +21,7 @@
 	display: grid;
 	place-items: center;
 	padding: 32px;
-	background: linear-gradient(180deg, #d99c2b 0%, #bf7e10 100%); /* dark mango */
+	background: linear-gradient(180deg, #d99c2b 0%, #bf7e10 100%); 
 	color: var(--text);
 	font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }

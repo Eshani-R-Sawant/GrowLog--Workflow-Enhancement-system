@@ -4,7 +4,7 @@
 	display: grid;
 	grid-template-columns: 140px 1fr;
 	color: #111;
-	background: linear-gradient(180deg, #d99c2b 0%, #bf7e10 100%); /* consistent dark mango */
+	/* background: linear-gradient(180deg, #d99c2b 0%, #bf7e10 100%);  */
 }
 
 /* Loading and Empty States */
@@ -39,7 +39,7 @@
 
 /* Navbar styles matching Dashboard */
 .history__nav {
-	background: linear-gradient(180deg, #bf7e10 0%, #bf7e10 100%);
+	/* background: linear-gradient(180deg, #bf7e10 0%, #bf7e10 100%); */
 	backdrop-filter: blur(0);
 	padding: 4px 4px;
 	border-right: 1px solid rgba(0,0,0,0.1);

@@ -1,6 +1,6 @@
 :root {
-	--mango-dark-1: #bf7e10 ;
-	--mango-dark-2: #bf7e10;
+	/* --mango-dark-1: #bf7e10 ; */
+	/* --mango-dark-2: #bf7e10; */
 	--card: #f5f7fb; /* light grey */
 	--card-text: #111;
 	--muted: #6b7280;
@@ -11,7 +11,8 @@
 }
 
 .dash__layout {
-	background: linear-gradient(180deg, #d99c2b 0%, #bf7e10 100%); /* consistent dark mango */
+	/* background: linear-gradient(180deg, #d99c2b 0%, #bf7e10 100%);  */
+	background: #f3f4f6; 
     min-height: 100vh;
     display: grid;
     grid-template-columns: 140px 1fr; /* minimal mango sidebar */
@@ -21,11 +22,12 @@
 .dash__main {
 	background: #f3f4f6; 
 	/* overall dashboard grey background */
-	width: 1370px
+	width: 90vw
 }
 
 .dash__nav {
-	background: linear-gradient(180deg, var(--mango-dark-1) 0%, var(--mango-dark-2) 100%);
+	/* background: linear-gradient(180deg, var(--mango-dark-1) 0%, var(--mango-dark-2) 100%); */
+	background: #f3f4f6; 
 	backdrop-filter: blur(0);
 	padding: 4px 4px; /* minimal mango padding */
 	border-right: 1px solid rgba(0,0,0,0.1);
@@ -61,11 +63,12 @@
 	gap: 6px;
 	cursor: pointer;
 	margin-bottom: 12px;
+	color: black;
 }
 .dash__hamburger span {
 	display: block;
 	height: 3px;
-	background: #fff;
+	background: #111;
 	border-radius: 2px;
 }
 

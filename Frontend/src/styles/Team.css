@@ -4,12 +4,12 @@
 	display: grid;
 	grid-template-columns: 140px 1fr;
 	color: #111;
-	background: linear-gradient(180deg, #d99c2b 0%, #bf7e10 100%); /* consistent dark mango */
+	/* background: linear-gradient(180deg, #d99c2b 0%, #bf7e10 100%);  */
 }
 
 /* Navbar styles matching Dashboard */
 .team__nav {
-	background: linear-gradient(180deg, #bf7e10 0%, #bf7e10 100%);
+	/* background: linear-gradient(180deg, #bf7e10 0%, #bf7e10 100%); */
 	backdrop-filter: blur(0);
 	padding: 4px 4px;
 	border-right: 1px solid rgba(0,0,0,0.1);
@@ -139,7 +139,7 @@
 }
 
 .team__member-avatar--manager {
-	background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+	/* background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); */
 	color: #fff;
 	font-size: 24px;
 }
