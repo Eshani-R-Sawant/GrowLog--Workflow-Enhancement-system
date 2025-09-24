@@ -1,3 +1,4 @@
+// src/services/Auth.js
 export async function signIn({ email, password, remember }) {
 	await new Promise(r => setTimeout(r, 600));
     const isDemo = email === 'demo@company.com' && password === 'password123';
