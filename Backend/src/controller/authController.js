@@ -18,13 +18,30 @@ export const register = async(req,res) => {
         console.log(error);
     }
 }
-export const authStatus = () => {
-
+export const authStatus = async (req,res) => {
+    if(req.user){
+        res.status(200).json({
+            message: "User logged in successfully",
+            username: req.user.username
+        });
+    }else{
+        res.status(401).json({
+            message: "Unauthorized user"
+        });
+    }
 }
-export const login = () => {
-
+export const login = async(req,res) => {
+    console.log("The authenticated used is : ", req.user);
+    res.status(200).json({
+        message: "User logged in successfully",
+        username: req.user.username
+    });
 }
-export const logout = () => {
-
+export const logout = async(req,res) => {
+    if(!req.user) res.status(401).json({message:"Unauthorized user"});
+    req.logout((err)=>{
+        if(err) return res.status(401).json({message:"Unauthorized user"});
+        res.status(200).json({message: "Logout Successfull"})
+    })
 }
 

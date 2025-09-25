@@ -8,10 +8,10 @@ const router = Router();
 router.post("/register", register);
 
 //route for login
-router.post("/login", login);
+router.post("/login",passport.authenticate("local"),login);
 
 //route for status
-router.post("/status", authStatus);
+router.get("/status", authStatus);
 
 //route for logout
 router.post("/logout", logout);
