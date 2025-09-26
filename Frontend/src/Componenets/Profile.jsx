@@ -1,30 +1,53 @@
 import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
+import profileService from '../services/ProfileService.js';
 import '../styles/Profile.css';
-
-const STORAGE_KEY = 'growlog_profile';
 
 export default function Profile() {
     const [profile, setProfile] = useState({
-        name: '',
-        doj: '',
-        dob: '',
+        // Non-editable fields (from database)
+        username: '',
+        email: '',
+        dateOfBirth: '',
+        dateOfJoining: '',
+        experience: 0,
+        createdAt: '',
+        
+        // Editable fields
         manager: '',
-        experience: '',
         domain: '',
         team: '',
         role: '',
-        avatarDataUrl: ''
+        bio: '',
+        phone: '',
+        location: '',
+        avatarDataUrl: '',
+        
+        // No task statistics needed in profile
     });
     const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
-        try {
-            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-            if (saved) setProfile((p) => ({ ...p, ...saved }));
-        } catch {}
+        loadProfile();
     }, []);
+
+    async function loadProfile() {
+        setLoading(true);
+        try {
+            const profileData = await profileService.getProfile();
+            if (profileData) {
+                setProfile(profileData);
+            }
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            setError('Failed to load profile data');
+        } finally {
+            setLoading(false);
+        }
+    }
 
     function onChange(field, value) {
         setProfile((p) => ({ ...p, [field]: value }));
@@ -46,18 +69,50 @@ export default function Profile() {
 
     async function onSave() {
         setSaving(true);
+        setError('');
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+            // Only send editable fields
+            const editableFields = {
+                manager: profile.manager,
+                domain: profile.domain,
+                team: profile.team,
+                role: profile.role,
+                bio: profile.bio,
+                phone: profile.phone,
+                location: profile.location,
+                avatarDataUrl: profile.avatarDataUrl
+            };
+
+            const updatedProfile = await profileService.updateProfile(editableFields);
+            if (updatedProfile) {
+                setProfile(prev => ({ ...prev, ...updatedProfile }));
+                alert('Profile updated successfully!');
+            }
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            setError('Failed to save profile');
         } finally {
             setSaving(false);
         }
     }
 
     function onCancel() {
-        try {
-            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-            if (saved) setProfile((p) => ({ ...p, ...saved }));
-        } catch {}
+        loadProfile(); // Reload from database
+    }
+
+    if (loading) {
+        return (
+            <ProtectedRoute>
+                <div className="dash__layout">
+                    <Sidebar />
+                    <main className="dash__main">
+                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                            <h2>Loading profile...</h2>
+                        </div>
+                    </main>
+                </div>
+            </ProtectedRoute>
+        );
     }
 
     return (
@@ -78,6 +133,7 @@ export default function Profile() {
                         <div className="profile__header-content">
                             <h1>👤 My Profile</h1>
                             <p>Keep your information up to date and showcase your professional journey</p>
+                            {error && <div style={{ color: 'red', marginTop: '1rem' }}>{error}</div>}
                         </div>
                     </header>
 
@@ -111,10 +167,10 @@ export default function Profile() {
                                 <div className="profile__form-row">
                                     <div className="profile__field">
                                         <label className="profile__label">
-                                            <span className="profile__label-text">Full Name</span>
+                                            <span className="profile__label-text">Username</span>
                                             <input 
                                                 className="profile__input profile__input--readonly" 
-                                                value={profile.name} 
+                                                value={profile.username} 
                                                 readOnly
                                                 placeholder="From database" 
                                             />
@@ -122,11 +178,11 @@ export default function Profile() {
                                     </div>
                                     <div className="profile__field">
                                         <label className="profile__label">
-                                            <span className="profile__label-text">Date of Birth</span>
+                                            <span className="profile__label-text">Email</span>
                                             <input 
                                                 className="profile__input profile__input--readonly" 
-                                                type="date" 
-                                                value={profile.dob} 
+                                                type="email" 
+                                                value={profile.email} 
                                                 readOnly
                                             />
                                         </label>
@@ -136,12 +192,38 @@ export default function Profile() {
                                 <div className="profile__form-row">
                                     <div className="profile__field">
                                         <label className="profile__label">
+                                            <span className="profile__label-text">Date of Birth</span>
+                                            <input 
+                                                className="profile__input profile__input--readonly" 
+                                                type="date" 
+                                                value={profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : ''} 
+                                                readOnly
+                                            />
+                                        </label>
+                                    </div>
+                                    <div className="profile__field">
+                                        <label className="profile__label">
                                             <span className="profile__label-text">Date of Joining</span>
                                             <input 
                                                 className="profile__input profile__input--readonly" 
                                                 type="date" 
-                                                value={profile.doj} 
+                                                value={profile.dateOfJoining ? new Date(profile.dateOfJoining).toISOString().split('T')[0] : ''} 
                                                 readOnly
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="profile__form-row">
+                                    <div className="profile__field">
+                                        <label className="profile__label">
+                                            <span className="profile__label-text">Years of Experience</span>
+                                            <input 
+                                                className="profile__input profile__input--readonly" 
+                                                type="number" 
+                                                value={profile.experience} 
+                                                readOnly
+                                                placeholder="Calculated from joining date" 
                                             />
                                         </label>
                                     </div>
@@ -161,25 +243,23 @@ export default function Profile() {
                                 <div className="profile__form-row">
                                     <div className="profile__field">
                                         <label className="profile__label">
-                                            <span className="profile__label-text">Years of Experience</span>
-                                            <input 
-                                                className="profile__input profile__input--readonly" 
-                                                type="number" 
-                                                min="0" 
-                                                value={profile.experience} 
-                                                readOnly
-                                                placeholder="From database" 
-                                            />
-                                        </label>
-                                    </div>
-                                    <div className="profile__field">
-                                        <label className="profile__label">
                                             <span className="profile__label-text">Domain</span>
                                             <input 
                                                 className="profile__input" 
                                                 value={profile.domain} 
                                                 onChange={(e) => onChange('domain', e.target.value)} 
                                                 placeholder="e.g., Frontend Development" 
+                                            />
+                                        </label>
+                                    </div>
+                                    <div className="profile__field">
+                                        <label className="profile__label">
+                                            <span className="profile__label-text">Phone</span>
+                                            <input 
+                                                className="profile__input" 
+                                                value={profile.phone} 
+                                                onChange={(e) => onChange('phone', e.target.value)} 
+                                                placeholder="Your phone number" 
                                             />
                                         </label>
                                     </div>
@@ -205,6 +285,32 @@ export default function Profile() {
                                                 value={profile.role} 
                                                 onChange={(e) => onChange('role', e.target.value)} 
                                                 placeholder="e.g., Senior Developer" 
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="profile__form-row">
+                                    <div className="profile__field">
+                                        <label className="profile__label">
+                                            <span className="profile__label-text">Location</span>
+                                            <input 
+                                                className="profile__input" 
+                                                value={profile.location} 
+                                                onChange={(e) => onChange('location', e.target.value)} 
+                                                placeholder="e.g., New York, USA" 
+                                            />
+                                        </label>
+                                    </div>
+                                    <div className="profile__field">
+                                        <label className="profile__label">
+                                            <span className="profile__label-text">Bio</span>
+                                            <textarea 
+                                                className="profile__input" 
+                                                value={profile.bio} 
+                                                onChange={(e) => onChange('bio', e.target.value)} 
+                                                placeholder="Tell us about yourself..." 
+                                                rows="3"
                                             />
                                         </label>
                                     </div>
@@ -240,6 +346,18 @@ export default function Profile() {
                                 <div className="profile__stat">
                                     <span className="profile__stat-number">{profile.avatarDataUrl ? '✅' : '⏳'}</span>
                                     <span className="profile__stat-label">Photo Uploaded</span>
+                                </div>
+                                <div className="profile__stat">
+                                    <span className="profile__stat-number">{profile.domain ? '✅' : '⏳'}</span>
+                                    <span className="profile__stat-label">Domain Set</span>
+                                </div>
+                                <div className="profile__stat">
+                                    <span className="profile__stat-number">{profile.role ? '✅' : '⏳'}</span>
+                                    <span className="profile__stat-label">Role Defined</span>
+                                </div>
+                                <div className="profile__stat">
+                                    <span className="profile__stat-number">{profile.manager ? '✅' : '⏳'}</span>
+                                    <span className="profile__stat-label">Manager Assigned</span>
                                 </div>
                             </div>
                         </div>

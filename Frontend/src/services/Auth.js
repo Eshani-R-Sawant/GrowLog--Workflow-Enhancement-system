@@ -1,35 +1,111 @@
 // src/services/Auth.js
 export async function signIn({ email, password, remember }) {
-	await new Promise(r => setTimeout(r, 600));
-    const isDemo = email === 'demo@company.com' && password === 'password123';
-    if (isDemo || (email && password.length >= 6)) {
-        const token = 'mock-token';
-        if (remember) {
-            localStorage.setItem('authToken', token);
+    try {
+            const response = await fetch("http://localhost:7001/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            if (!data.token) {
+                throw new Error('Authentication failed: No token received');
+            }
+
+            // Store JWT and user data
+            if (remember) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify({
+                    username: data.username,
+                    email: data.email
+                }));
+                // Back-compat
+                localStorage.setItem('authToken', data.token);
+            } else {
+                sessionStorage.setItem('token', data.token);
+                sessionStorage.setItem('user', JSON.stringify({
+                    username: data.username,
+                    email: data.email
+                }));
+                sessionStorage.setItem('authToken', data.token);
+            }
+
+            return { 
+                ok: true, 
+                user: { username: data.username, email: data.email },
+                token: data.token 
+            };
         } else {
-            sessionStorage.setItem('authToken', token);
+            throw new Error(data.message || 'Login failed. Please try again.');
         }
-        // Back-compat for earlier check
-        if (remember) localStorage.setItem('demoToken', token);
-        return { ok: true };
+    } catch (error) {
+        console.error('SignIn error:', error);
+        throw error;
     }
-	throw new Error('Invalid credentials.');
 }
 
 export async function signUp({ name, email, password }) {
-	await new Promise(r => setTimeout(r, 700));
-	if (!name || !email || password.length < 8) {
-		throw new Error('Please provide valid signup info.');
-	}
-	return { ok: true };
+    try {
+            const response = await fetch("http://localhost:7001/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                username: name, 
+                email, 
+                password 
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            return { 
+                ok: true, 
+                message: data.message || "User registered successfully"
+            };
+        } else {
+            throw new Error(data.error || data.message || 'Registration failed. Please try again.');
+        }
+    } catch (error) {
+        console.error('SignUp error:', error);
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            throw new Error('Unable to connect to server. Please check your internet connection.');
+        } else {
+            throw error;
+        }
+    }
 }
 
 export function isAuthenticated() {
   return Boolean(
+    localStorage.getItem('token') ||
+    sessionStorage.getItem('token') ||
     localStorage.getItem('authToken') ||
-    sessionStorage.getItem('authToken') ||
-    localStorage.getItem('demoToken')
+    sessionStorage.getItem('authToken')
   );
+}
+
+export function getToken() {
+  return localStorage.getItem('token') || 
+         sessionStorage.getItem('token') ||
+         localStorage.getItem('authToken') ||
+         sessionStorage.getItem('authToken');
+}
+
+export function getUser() {
+  const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+  return userStr ? JSON.parse(userStr) : null;
+}
+
+export function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('authToken');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
+  sessionStorage.removeItem('authToken');
 }
 
 // Optional: also export default for convenience

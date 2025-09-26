@@ -17,45 +17,77 @@ function Board() {
 		loadTasksForDate(selectedDate);
 	}, []);
 
-	function loadTasksForDate(date) {
-		const tasks = taskService.getTasksByDate(date);
-		setTodo(tasks.todo || []);
-		setInProgress(tasks.inProgress || []);
-		setCompleted(tasks.completed || []);
+	async function loadTasksForDate(date) {
+		try {
+			const tasks = await taskService.getTasksByDate(date);
+			console.log('Loaded tasks:', tasks);
+			
+			// Filter out tasks without proper structure
+			const validTasks = {
+				todo: (tasks.todo || []).filter(task => task.title && (task._id || task.id)),
+				inProgress: (tasks.inProgress || []).filter(task => task.title && (task._id || task.id)),
+				completed: (tasks.completed || []).filter(task => task.title && (task._id || task.id))
+			};
+			
+			setTodo(validTasks.todo);
+			setInProgress(validTasks.inProgress);
+			setCompleted(validTasks.completed);
+		} catch (error) {
+			console.error('Error loading tasks:', error);
+		}
 	}
 
-	function addTask(e) {
+	async function addTask(e) {
 		e.preventDefault();
 		if (!newTitle.trim()) return;
 		
-		const newTask = taskService.addTask(selectedDate, newTitle.trim(), 'todo');
-		setTodo([newTask, ...todo]);
-		setNewTitle('');
+		try {
+			const newTask = await taskService.addTask(selectedDate, newTitle.trim(), 'todo');
+			if (newTask) {
+				setTodo([newTask, ...todo]);
+				setNewTitle('');
+			}
+		} catch (error) {
+			console.error('Error adding task:', error);
+		}
 	}
 
-	function moveTask(id, from, to) {
+	async function moveTask(id, from, to) {
+		console.log('Moving task:', { id, from, to });
 		const lists = { todo, inProgress, completed };
 		const setters = { todo: setTodo, inProgress: setInProgress, completed: setCompleted };
-		const item = lists[from].find(t => t.id === id);
+		const item = lists[from].find(t => (t._id || t.id) === id);
+		console.log('Found item:', item);
 		if (!item) return;
 		
-		// Update in backend
-		taskService.moveTask(selectedDate, id, from, to);
-		
-		// Update local state
-		setters[from](lists[from].filter(t => t.id !== id));
-		setters[to]([item, ...lists[to]]);
+		try {
+			// Update in backend
+			const updatedTask = await taskService.moveTask(selectedDate, id, from, to);
+			console.log('Updated task from API:', updatedTask);
+			if (updatedTask) {
+				// Update local state
+				setters[from](lists[from].filter(t => (t._id || t.id) !== id));
+				setters[to]([updatedTask, ...lists[to]]);
+			}
+		} catch (error) {
+			console.error('Error moving task:', error);
+		}
 	}
 
-	function removeTask(id, from) {
+	async function removeTask(id, from) {
 		const setters = { todo: setTodo, inProgress: setInProgress, completed: setCompleted };
 		const lists = { todo, inProgress, completed };
 		
-		// Update in backend
-		taskService.deleteTask(selectedDate, id, from);
-		
-		// Update local state
-		setters[from](lists[from].filter(t => t.id !== id));
+		try {
+			// Update in backend
+			const success = await taskService.deleteTask(selectedDate, id, from);
+			if (success) {
+				// Update local state
+				setters[from](lists[from].filter(t => t.id !== id));
+			}
+		} catch (error) {
+			console.error('Error deleting task:', error);
+		}
 	}
 
 	// Calculate progress percentage
@@ -138,12 +170,12 @@ function Board() {
 						</form>
 						<ul className="dash__list">
 							{todo.map(t => (
-								<li key={t.id} className="dash__card">
+								<li key={t._id || t.id} className="dash__card">
 									<div className="dash__title">{t.title}</div>
 									<div className="dash__actions">
-										<button className="dash__btn dash__btn--green" onClick={() => moveTask(t.id, 'todo', 'inProgress')}>Start</button>
-										<button className="dash__btn" onClick={() => moveTask(t.id, 'todo', 'completed')}>Done</button>
-										<button className="dash__btn dash__btn--ghost" onClick={() => removeTask(t.id, 'todo')}>Delete</button>
+										<button className="dash__btn dash__btn--green" onClick={() => moveTask(t._id || t.id, 'todo', 'inProgress')}>Start</button>
+										<button className="dash__btn" onClick={() => moveTask(t._id || t.id, 'todo', 'completed')}>Done</button>
+										<button className="dash__btn dash__btn--ghost" onClick={() => removeTask(t._id || t.id, 'todo')}>Delete</button>
 									</div>
 								</li>
 							))}
@@ -154,12 +186,12 @@ function Board() {
 						<h2>⚡ In‑Progress</h2>
 						<ul className="dash__list">
 							{inProgress.map(t => (
-								<li key={t.id} className="dash__card">
+								<li key={t._id || t.id} className="dash__card">
 									<div className="dash__title">{t.title}</div>
 									<div className="dash__actions">
-										<button className="dash__btn dash__btn--green" onClick={() => moveTask(t.id, 'inProgress', 'completed')}>Complete</button>
-										<button className="dash__btn" onClick={() => moveTask(t.id, 'inProgress', 'todo')}>Back</button>
-										<button className="dash__btn dash__btn--ghost" onClick={() => removeTask(t.id, 'inProgress')}>Delete</button>
+										<button className="dash__btn dash__btn--green" onClick={() => moveTask(t._id || t.id, 'inProgress', 'completed')}>Complete</button>
+										<button className="dash__btn" onClick={() => moveTask(t._id || t.id, 'inProgress', 'todo')}>Back</button>
+										<button className="dash__btn dash__btn--ghost" onClick={() => removeTask(t._id || t.id, 'inProgress')}>Delete</button>
 									</div>
 								</li>
 							))}
@@ -170,11 +202,11 @@ function Board() {
 						<h2>✅ Completed</h2>
 						<ul className="dash__list">
 							{completed.map(t => (
-								<li key={t.id} className="dash__card">
+								<li key={t._id || t.id} className="dash__card">
 									<div className="dash__title">{t.title}</div>
 									<div className="dash__actions">
-										<button className="dash__btn" onClick={() => moveTask(t.id, 'completed', 'inProgress')}>Reopen</button>
-										<button className="dash__btn dash__btn--ghost" onClick={() => removeTask(t.id, 'completed')}>Delete</button>
+										<button className="dash__btn" onClick={() => moveTask(t._id || t.id, 'completed', 'inProgress')}>Reopen</button>
+										<button className="dash__btn dash__btn--ghost" onClick={() => removeTask(t._id || t.id, 'completed')}>Delete</button>
 									</div>
 								</li>
 							))}

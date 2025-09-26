@@ -82,11 +82,32 @@ export default function History() {
 		loadTaskHistory();
 	}, []);
 
-	function loadTaskHistory() {
+	async function loadTaskHistory() {
 		setLoading(true);
 		try {
-			const recentHistory = taskService.getRecentTaskHistory(10);
-			setHistoryData(recentHistory);
+			const recentHistory = await taskService.getRecentTaskHistory(10);
+			console.log('Loaded history data:', recentHistory);
+			
+			// Transform the data to match the expected format
+			const transformedData = recentHistory.map(day => ({
+				...day,
+				completed: (day.completed || []).map(task => ({
+					id: task._id || task.id,
+					title: task.title,
+					time: new Date(task.updatedAt || task.createdAt).toLocaleTimeString('en-US', { 
+						hour: '2-digit', 
+						minute: '2-digit' 
+					})
+				})),
+				leftover: [...(day.todo || []), ...(day.inProgress || [])].map(task => ({
+					id: task._id || task.id,
+					title: task.title,
+					priority: 'Medium' // Default priority
+				})),
+				motivation: getMotivationMessage(day.productivity || 0)
+			}));
+			
+			setHistoryData(transformedData);
 		} catch (error) {
 			console.error('Error loading task history:', error);
 			// Fallback to mock data if backend fails
@@ -96,9 +117,9 @@ export default function History() {
 		}
 	}
 	
-	const totalCompleted = historyData.reduce((sum, day) => sum + day.completedCount, 0);
+	const totalCompleted = historyData.reduce((sum, day) => sum + (day.completed?.length || 0), 0);
 	const totalLeftover = historyData.reduce((sum, day) => sum + (day.todo?.length || 0) + (day.inProgress?.length || 0), 0);
-	const avgProductivity = historyData.length > 0 ? Math.round(historyData.reduce((sum, day) => sum + day.productivity, 0) / historyData.length) : 0;
+	const avgProductivity = historyData.length > 0 ? Math.round(historyData.reduce((sum, day) => sum + (day.productivity || 0), 0) / historyData.length) : 0;
 
 	const handleDayClick = (day) => {
 		setSelectedDay(day);

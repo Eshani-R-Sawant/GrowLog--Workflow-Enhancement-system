@@ -1,111 +1,162 @@
 // src/services/TaskService.js
+import { getToken } from './Auth.js';
+
 class TaskService {
-  constructor() {
-    this.storageKey = 'workflow_tasks';
-    this.initializeStorage();
+    constructor() {
+        this.baseURL = 'http://localhost:7001/api/tasks';
   }
 
-  initializeStorage() {
-    if (!localStorage.getItem(this.storageKey)) {
-      localStorage.setItem(this.storageKey, JSON.stringify({}));
-    }
+  // Get authorization headers
+  getHeaders() {
+    const token = getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
   }
 
   // Get all tasks for a specific date
-  getTasksByDate(date) {
-    const allTasks = this.getAllTasks();
-    return allTasks[date] || { todo: [], inProgress: [], completed: [] };
-  }
-
-  // Get all tasks
-  getAllTasks() {
+  async getTasksByDate(date) {
     try {
-      return JSON.parse(localStorage.getItem(this.storageKey)) || {};
-    } catch (error) {
-      console.error('Error parsing tasks from storage:', error);
-      return {};
-    }
-  }
+      const response = await fetch(`${this.baseURL}/date/${date}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
 
-  // Save tasks for a specific date
-  saveTasksForDate(date, tasks) {
-    const allTasks = this.getAllTasks();
-    allTasks[date] = tasks;
-    localStorage.setItem(this.storageKey, JSON.stringify(allTasks));
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.success ? data.data : { todo: [], inProgress: [], completed: [] };
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      return { todo: [], inProgress: [], completed: [] };
+    }
   }
 
   // Add a new task
-  addTask(date, title, status = 'todo') {
-    const tasks = this.getTasksByDate(date);
-    const newTask = {
-      id: Date.now() + Math.random(),
-      title: title.trim(),
-      status: status,
-      createdAt: new Date().toISOString(),
-      date: date
-    };
-    
-    tasks[status].push(newTask);
-    this.saveTasksForDate(date, tasks);
-    return newTask;
+  async addTask(date, title, status = 'todo') {
+    try {
+      const response = await fetch(this.baseURL, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          title: title.trim(),
+          status: status,
+          date: date
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.success ? data.data : null;
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
   }
 
   // Move task between statuses
-  moveTask(date, taskId, fromStatus, toStatus) {
-    const tasks = this.getTasksByDate(date);
-    const taskIndex = tasks[fromStatus].findIndex(task => task.id === taskId);
-    
-    if (taskIndex === -1) return null;
-    
-    const task = tasks[fromStatus][taskIndex];
-    task.status = toStatus;
-    task.updatedAt = new Date().toISOString();
-    
-    // Remove from old status
-    tasks[fromStatus].splice(taskIndex, 1);
-    // Add to new status
-    tasks[toStatus].unshift(task);
-    
-    this.saveTasksForDate(date, tasks);
-    return task;
+  async moveTask(date, taskId, fromStatus, toStatus) {
+    console.log('TaskService moveTask called:', { date, taskId, fromStatus, toStatus });
+    try {
+      const response = await fetch(`${this.baseURL}/${taskId}/status`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          status: toStatus
+        })
+      });
+
+      console.log('Move task response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Move task error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Move task response data:', data);
+      return data.success ? data.data : null;
+    } catch (error) {
+      console.error('Error moving task:', error);
+      throw error;
+    }
   }
 
   // Delete task
-  deleteTask(date, taskId, status) {
-    const tasks = this.getTasksByDate(date);
-    tasks[status] = tasks[status].filter(task => task.id !== taskId);
-    this.saveTasksForDate(date, tasks);
+  async deleteTask(date, taskId, status) {
+    try {
+      const response = await fetch(`${this.baseURL}/${taskId}`, {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.success;
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
   }
 
   // Get task history for a date range
-  getTaskHistory(startDate, endDate) {
-    const allTasks = this.getAllTasks();
-    const history = [];
-    
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-      const dateStr = date.toISOString().split('T')[0];
-      const dayTasks = allTasks[dateStr];
-      
-      if (dayTasks) {
-        history.push({
-          date: dateStr,
-          dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
-          dayNumber: date.getDate(),
-          month: date.toLocaleDateString('en-US', { month: 'short' }),
-          todo: dayTasks.todo || [],
-          inProgress: dayTasks.inProgress || [],
-          completed: dayTasks.completed || [],
-          totalTasks: (dayTasks.todo?.length || 0) + (dayTasks.inProgress?.length || 0) + (dayTasks.completed?.length || 0),
-          completedCount: dayTasks.completed?.length || 0,
-          productivity: this.calculateProductivity(dayTasks)
-        });
+  async getTaskHistory(startDate, endDate) {
+    try {
+      const response = await fetch(`${this.baseURL}?startDate=${startDate}&endDate=${endDate}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        return [];
+      }
+
+      // Group tasks by date
+      const groupedTasks = {};
+      data.data.forEach(task => {
+        if (!groupedTasks[task.date]) {
+          groupedTasks[task.date] = {
+            date: task.date,
+            dayName: new Date(task.date).toLocaleDateString('en-US', { weekday: 'short' }),
+            dayNumber: new Date(task.date).getDate(),
+            month: new Date(task.date).toLocaleDateString('en-US', { month: 'short' }),
+            todo: [],
+            inProgress: [],
+            completed: []
+          };
+        }
+        groupedTasks[task.date][task.status].push(task);
+      });
+
+      // Convert to array and calculate stats
+      const history = Object.values(groupedTasks).map(dayTasks => ({
+        ...dayTasks,
+        totalTasks: (dayTasks.todo?.length || 0) + (dayTasks.inProgress?.length || 0) + (dayTasks.completed?.length || 0),
+        completedCount: dayTasks.completed?.length || 0,
+        productivity: this.calculateProductivity(dayTasks)
+      }));
+
+      return history.sort((a, b) => new Date(a.date) - new Date(b.date));
+    } catch (error) {
+      console.error('Error fetching task history:', error);
+      return [];
     }
-    
-    return history;
   }
 
   // Calculate productivity percentage
@@ -116,18 +167,42 @@ class TaskService {
   }
 
   // Get tasks for the last N days
-  getRecentTaskHistory(days = 10) {
+  async getRecentTaskHistory(days = 10) {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     
-    return this.getTaskHistory(startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]);
+    return await this.getTaskHistory(startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]);
   }
 
-  // Clear all tasks (for testing)
-  clearAllTasks() {
-    localStorage.removeItem(this.storageKey);
-    this.initializeStorage();
+  // Get all user tasks (with pagination)
+  async getAllUserTasks(page = 1, limit = 50) {
+    try {
+      const response = await fetch(`${this.baseURL}?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.success ? data : { data: [], pagination: { current: 1, pages: 0, total: 0 } };
+    } catch (error) {
+      console.error('Error fetching all tasks:', error);
+      return { data: [], pagination: { current: 1, pages: 0, total: 0 } };
+    }
+  }
+
+  // Clear old localStorage data
+  clearOldData() {
+    try {
+      localStorage.removeItem('workflow_tasks');
+      console.log('Old localStorage data cleared');
+    } catch (error) {
+      console.error('Error clearing old data:', error);
+    }
   }
 }
 

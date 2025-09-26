@@ -26,8 +26,7 @@
 }
 
 .dash__nav {
-	/* background: linear-gradient(180deg, var(--mango-dark-1) 0%, var(--mango-dark-2) 100%); */
-	background: #f3f4f6; 
+	background: linear-gradient(180deg, #eaaa16 0%, #e79a2d 100%); /* Light mango gradient */
 	backdrop-filter: blur(0);
 	padding: 4px 4px; /* minimal mango padding */
 	border-right: 1px solid rgba(0,0,0,0.1);
@@ -68,7 +67,7 @@
 .dash__hamburger span {
 	display: block;
 	height: 3px;
-	background: #111;
+	background: black;
 	border-radius: 2px;
 }
 
@@ -88,17 +87,26 @@
 
 .dash__navlink {
 	text-decoration: none;
-	color: #fff;
-	background: linear-gradient(135deg, var(--green-strong), var(--green));
-	border: none;
+	color: #000;
+	background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+	border: 1px solid rgba(255,255,255,0.3);
 	padding: 10px 12px;
 	border-radius: 10px;
 	display: block;
 	text-align: center;
+	backdrop-filter: blur(10px);
 }
 
 .dash__navlink:hover {
-	filter: brightness(1.03);
+	background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.2));
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.dash__navlink.is-active {
+	background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.3));
+	border: 1px solid rgba(255,255,255,0.5);
+	font-weight: 600;
 }
 
 .dash__main {
