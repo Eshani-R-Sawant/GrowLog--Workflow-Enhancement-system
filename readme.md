@@ -48,7 +48,6 @@ This setup requires running **four separate processes** in different terminal wi
 git clone https://github.com/your-username/GrowLog.git
 cd GrowLog
 ```
-<p align="center">Made with ❤️ for better project management</p>
 
 ### 2. Environment Variables
 - Navigate to the Backend directory:
@@ -116,15 +115,15 @@ GrowLog/
 
 ## 📸 Screenshots
 - Login page 
-<img src="../GrowLog--Workflow-Enhancement-system/screenshots/login.jpg">
+<img src="./screenshots/login.jpg">
 - Sign Up page
-<img src="../GrowLog--Workflow-Enhancement-system/screenshots/signup.jpg">
+<img src="./screenshots/signup.jpg">
 - Dashboard page
-<img src="../GrowLog--Workflow-Enhancement-system/screenshots/dashboard.jpg">
+<img src="./screenshots/dashboard.jpg">
 - History page
-<img src="../GrowLog--Workflow-Enhancement-system/screenshots/history.jpg">
+<img src="./screenshots/history.jpg">
 - Team page
-<img src="../GrowLog--Workflow-Enhancement-system/screenshots/team.jpg">
+<img src="./screenshots/team.jpg">
 - Profile page
-<img src="../GrowLog--Workflow-Enhancement-system/screenshots/my-profile.jpg">
+<img src="./screenshots/my-profile.jpg">
 
