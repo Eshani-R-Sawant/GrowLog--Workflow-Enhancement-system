@@ -45,8 +45,7 @@ This setup requires running **four separate processes** in different terminal wi
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/GrowLog.git
-cd GrowLog
+git clone https://github.com/Eshani-R-Sawant/GrowLog--Workflow-Enhancement-system
 ```
 
 ### 2. Environment Variables
