@@ -115,15 +115,15 @@ GrowLog/
 
 ## 📸 Screenshots
 - Login page 
-<img src="./screenshots/login.jpg">
+    <img src="./screenshots/login.jpg">
 - Sign Up page
-<img src="./screenshots/signup.jpg">
+    <img src="./screenshots/signup.jpg">
 - Dashboard page
-<img src="./screenshots/dashboard.jpg">
+    <img src="./screenshots/dashboard.jpg">
 - History page
-<img src="./screenshots/history.jpg">
+    <img src="./screenshots/history.jpg">
 - Team page
-<img src="./screenshots/team.jpg">
+    <img src="./screenshots/team.jpg">
 - Profile page
-<img src="./screenshots/my-profile.jpg">
+    <img src="./screenshots/my-profile.jpg">
 
